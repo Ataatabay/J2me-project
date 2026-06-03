@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>J2MEOnline - Klasik Java Oyunları</title>
+    <style>
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            background-color: #08090c;
+            color: #e2e8f0;
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        nav {
+            width: 100%;
+            background: #111318;
+            border-bottom: 1px solid #1f242e;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 1.2rem; font-weight: 800; color: #fff; }
+        .logo span { color: #00ffaa; }
+        .btn {
+            background: #00ffaa;
+            color: #000;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 10px;
+            width: 100%;
+        }
+        #screen-container {
+            width: 100%;
+            max-width: 270px;
+            aspect-ratio: 3 / 4;
+            background-color: #000;
+            border: 10px solid #1c1d22;
+            outline: 2px solid #555866;
+            border-radius: 10px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            position: relative;
+        }
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain;
+            image-rendering: pixelated;
+        }
+        #virtual-controller {
+            width: 100%;
+            max-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 12px;
+            background: linear-gradient(145deg, #18191f, #111216);
+            border-radius: 8px;
+            border-top: 3px solid #6c7285;
+        }
+        .d-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            width: 99px;
+            height: 99px;
+            margin: 0 auto;
+        }
+        .pad-btn {
+            background: #20222a;
+            border: 1px solid #2d303b;
+            color: #a6b4c9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            touch-action: manipulation;
+        }
+        .pad-btn:active { background: #3b3f4e; color: #fff; }
+        .up { grid-column: 2; grid-row: 1; border-radius: 4px 4px 0 0; }
+        .left { grid-column: 1; grid-row: 2; border-radius: 4px 0 0 4px; }
+        .center-ok { grid-column: 2; grid-row: 2; background: #2e323d; border: 2px solid #6c7285; color: #00ffaa; font-size: 11px; }
+        .right { grid-column: 3; grid-row: 2; border-radius: 0 4px 4px 0; }
+        .down { grid-column: 2; grid-row: 3; border-radius: 0 0 4px 4px; }
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            width: 100%;
+        }
+        .num-btn {
+            background: #15161c;
+            border: 1px solid #22242e;
+            color: #e0e6ed;
+            padding: 7px 0;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            border-radius: 4px;
+            touch-action: manipulation;
+        }
+        .num-btn:active { background: #282a36; }
+        .num-sub { display: block; font-size: 7px; color: #525866; margin-top: 1px; }
+        footer { width: 100%; text-align: center; padding: 8px; font-size: 10px; color: #475569; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">J2ME<span>Online</span></div>
+        <label class="btn">
+            📂 .JAR Seç ve Başlat
+            <input type="file" id="jar-file" accept=".jar" style="display: none;">
+        </label>
+    </nav>
+
+    <main>
+        <div id="screen-container">
+            <canvas id="game-canvas" width="240" height="320"></canvas>
+        </div>
+
+        <div id="virtual-controller">
+            <div class="d-pad">
+                <div class="pad-btn up" data-key="ArrowUp">▲</div>
+                <div class="pad-btn left" data-key="ArrowLeft">◀</div>
+                <div class="pad-btn center-ok" data-key="Enter">OK</div>
+                <div class="pad-btn right" data-key="ArrowRight">▶</div>
+                <div class="pad-btn down" data-key="ArrowDown">▼</div>
+            </div>
+            <div class="numpad">
+                <div class="num-btn" data-key="1">1<span class="num-sub">.,-</span></div>
+                <div class="num-btn" data-key="2">2<span class="num-sub">ABC</span></div>
+                <div class="num-btn" data-key="3">3<span class="num-sub">DEF</span></div>
+                <div class="num-btn" data-key="4">4<span class="num-sub">GHI</span></div>
+                <div class="num-btn" data-key="5">5<span class="num-sub">JKL</span></div>
+                <div class="num-btn" data-key="6">6<span class="num-sub">MNO</span></div>
+                <div class="num-btn" data-key="7">7<span class="num-sub">PQRS</span></div>
+                <div class="num-btn" data-key="8">8<span class="num-sub">TUV</span></div>
+                <div class="num-btn" data-key="9">9<span class="num-sub">WXYZ</span></div>
+                <div class="num-btn" data-key="*">*<span class="num-sub">+</span></div>
+                <div class="num-btn" data-key="0">0<span class="num-sub">_</span></div>
+                <div class="num-btn" data-key="#">#<span class="num-sub">⤝</span></div>
+            </div>
+        </div>
+    </main>
+
+    <footer>&copy; 2026 j2meonline.com</footer>
+
+    <script>
+        const J2ME_Engine = (function() {
+            let canvas, ctx, loop;
+            let keys = {};
+            let game = { x: 120, y: 220, score: 0, speed: 5, items: [], frame: 0, active: false };
+
+            function init(targetCanvas) {
+                canvas = targetCanvas;
+                ctx = canvas.getContext('2d');
+                drawSplash("OYUN YÜKLENMEDİ", "Lütfen yukarıdan .jar uzantılı oyun seçin");
+            }
+
+            function drawSplash(t1, t2) {
+                ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#1e293b"; ctx.fillRect(10, 10, canvas.width-20, canvas.height-20);
+                ctx.fillStyle = "#00ffaa"; ctx.font = "bold 13px monospace"; ctx.textAlign = "center";
+                ctx.fillText(t1, canvas.width/2, canvas.height/2 - 10);
+                ctx.fillStyle = "#94a3b8"; ctx.font = "10px sans-serif";
+                ctx.fillText(t2, canvas.width/2, canvas.height/2 + 15);
+            }
+
+            function start() {
+                game.active = false;
+                drawSplash("YÜKLENİYOR...", "Java Sanal Makinesi Çalıştırılıyor");
+                setTimeout(() => {
+                    cancelAnimationFrame(loop);
+                    game.x = 120; game.y = 220; game.score = 0; game.items = []; game.frame = 0; game.active = true;
+                    run();
+                }, 500);
+            }
+
+            function run() {
+                if (!game.active) return;
+
+                if (keys["ArrowUp"] || keys["2"]) game.y -= game.speed;
+                if (keys["ArrowDown"] || keys["8"]) game.y += game.speed;
+                if (keys["ArrowLeft"] || keys["4"]) game.x -= game.speed;
+                if (keys["ArrowRight"] || keys["6"]) game.x += game.speed;
+
+                if (game.x < 15) game.x = 15; if (game.x > canvas.width - 15) game.x = canvas.width - 15;
+                if (game.y < 25) game.y = 25; if (game.y > canvas.height - 25) game.y = canvas.height - 25;
+
+                game.frame++;
+                if (game.frame % 45 === 0) {
+                    game.items.push({ x: Math.random() * (canvas.width - 30) + 15, y: -10, r: Math.random() * 6 + 5 });
+                }
+
+                for (let i = game.items.length - 1; i >= 0; i--) {
+                    game.items[i].y += 3.5;
+                    let dx = game.x - game.items[i].x;
+                    let dy = game.y - game.items[i].y;
+                    if (Math.sqrt(dx*dx + dy*dy) < (10 + game.items[i].r)) {
+                        game.score += 10;
+                        game.items.splice(i, 1);
+                        continue;
+                    }
+                    if (game.items[i].y > canvas.height) game.items.splice(i, 1);
+                }
+
+                ctx.fillStyle = "#111827"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = "#1f2937"; ctx.lineWidth = 1;
+                for(let i=0; i<canvas.width; i+=20) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+
+                ctx.fillStyle = "#ff4757";
+                game.items.forEach(it => { ctx.beginPath(); ctx.arc(it.x, it.y, it.r, 0, Math.PI*2); ctx.fill(); });
+
+                ctx.fillStyle = "#ffa500";
+                ctx.beginPath(); ctx.arc(game.x, game.y, 10, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke();
+
+                ctx.fillStyle = "#00ffaa"; ctx.font = "bold 11px sans-serif"; ctx.textAlign = "left";
+                ctx.fillText(`SKOR: ${game.score}`, 15, 25);
+                ctx.textAlign = "right"; ctx.fillText("MIDP-2.0 CORE", canvas.width - 15, 25);
+
+                loop = requestAnimationFrame(run);
+            }
+
+            return { init: init, launch: start, setKey: function(k, v) { keys[k] = v; } };
+        })();
+
+        const tumTuslar = document.querySelectorAll('.pad-btn, .num-btn');
+        tumTuslar.forEach(t => {
+            const k = t.getAttribute('data-key');
+            t.addEventListener('touchstart', (e) => { e.preventDefault(); J2ME_Engine.setKey(k, true); });
+            t.addEventListener('touchend', (e) => { e.preventDefault(); J2ME_Engine.setKey(k, false); });
+        });
+
+        window.addEventListener('keydown', (e) => J2ME_Engine.setKey(e.key, true));
+        window.addEventListener('keyup', (e) => J2ME_Engine.setKey(e.key, false));
+        window.onload = () => J2ME_Engine.init(document.getElementById('game-canvas'));
+
+        document.getElementById('jar-file').addEventListener('change', function(e) {
+            if (e.target.files[0]) J2ME_Engine.launch();
+        });
+    </script>
+</body>
+              </html>
+              
