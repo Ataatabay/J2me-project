@@ -1,0 +1,255 @@
+```html
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>J2ME Pro - Gerçek Java Emülatörü</title>
+    <!-- Profesyonel WebJVM Çekirdeği -->
+    <script src="https://unpkg.com/@webjvm/core@1.0.3/dist/webjvm.js"></script>
+    <style>
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            background-color: #0b0c10;
+            color: #c5c6c7;
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        nav {
+            width: 100%;
+            background: #1f2833;
+            border-bottom: 2px solid #45f3ff;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 1.2rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
+        .logo span { color: #45f3ff; }
+        .btn {
+            background: #45f3ff;
+            color: #0b0c10;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(69, 243, 255, 0.3);
+        }
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 10px;
+            width: 100%;
+        }
+        #screen-container {
+            width: 100%;
+            max-width: 270px;
+            aspect-ratio: 3 / 4;
+            background-color: #000;
+            border: 4px solid #1f2833;
+            border-radius: 8px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.7);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        #display-canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            image-rendering: pixelated;
+        }
+        #status-overlay {
+            position: absolute;
+            color: #45f3ff;
+            font-family: monospace;
+            font-size: 12px;
+            text-align: center;
+            background: rgba(11, 12, 16, 0.85);
+            padding: 15px;
+            border-radius: 5px;
+            width: 80%;
+        }
+        #virtual-controller {
+            width: 100%;
+            max-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 12px;
+            background: #1f2833;
+            border-radius: 12px;
+            box-shadow: inset 0 1px 3px rgba(255,255,255,0.1);
+        }
+        .d-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            width: 105px;
+            height: 105px;
+            margin: 0 auto;
+        }
+        .pad-btn {
+            background: #0b0c10;
+            border: 1px solid #2f3e46;
+            color: #66fcf1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            touch-action: manipulation;
+        }
+        .pad-btn:active { background: #45f3ff; color: #0b0c10; }
+        .up { grid-column: 2; grid-row: 1; border-radius: 8px 8px 0 0; }
+        .left { grid-column: 1; grid-row: 2; border-radius: 8px 0 0 8px; }
+        .center-ok { grid-column: 2; grid-row: 2; background: #1f2833; border: 2px solid #45f3ff; color: #fff; font-size: 12px; }
+        .right { grid-column: 3; grid-row: 2; border-radius: 0 8px 8px 0; }
+        .down { grid-column: 2; grid-row: 3; border-radius: 0 0 8px 8px; }
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            width: 100%;
+        }
+        .num-btn {
+            background: #0b0c10;
+            border: 1px solid #2f3e46;
+            color: #fff;
+            padding: 8px 0;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            border-radius: 6px;
+            touch-action: manipulation;
+        }
+        .num-btn:active { background: #45f3ff; color: #0b0c10; }
+        .num-sub { display: block; font-size: 7px; color: #45f3ff; opacity: 0.6; margin-top: 1px; }
+        footer { width: 100%; text-align: center; padding: 6px; font-size: 10px; color: #66fcf1; opacity: 0.4; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">J2ME<span>PRO</span></div>
+        <label class="btn">
+            📂 OYUN (.JAR) SEÇ
+            <input type="file" id="jar-file" accept=".jar" style="display: none;">
+        </label>
+    </nav>
+
+    <main>
+        <div id="screen-container">
+            <canvas id="display-canvas"></canvas>
+            <div id="status-overlay">Asphalt 6 veya herhangi bir .jar dosyası seçin...</div>
+        </div>
+
+        <div id="virtual-controller">
+            <div class="d-pad">
+                <div class="pad-btn up" data-phonekey="UP">▲</div>
+                <div class="pad-btn left" data-phonekey="LEFT">◀</div>
+                <div class="pad-btn center-ok" data-phonekey="FIRE">OK</div>
+                <div class="pad-btn right" data-phonekey="RIGHT">▶</div>
+                <div class="pad-btn down" data-phonekey="DOWN">▼</div>
+            </div>
+            <div class="numpad">
+                <div class="num-btn" data-phonekey="KEY_NUM1">1<span class="num-sub">.,-</span></div>
+                <div class="num-btn" data-phonekey="KEY_NUM2">2<span class="num-sub">ABC</span></div>
+                <div class="num-btn" data-phonekey="KEY_NUM3">3<span class="num-sub">DEF</span></div>
+                <div class="num-btn" data-phonekey="KEY_NUM4">4<span class="num-sub">GHI</span></div>
+                <div class="num-btn" data-phonekey="KEY_NUM5">5<span class="num-sub">JKL</span></div>
+                <div class="num-btn" data-phonekey="KEY_NUM6">6<span class="num-sub">MNO</span></div>
+                <div class="num-btn" data-phonekey="KEY_NUM7">7<span class="num-sub">PQRS</span></div>
+                <div class="num-btn" data-phonekey="KEY_NUM8">8<span class="num-sub">TUV</span></div>
+                <div class="num-btn" data-phonekey="KEY_NUM9">9<span class="num-sub">WXYZ</span></div>
+                <div class="num-btn" data-phonekey="KEY_STAR">*<span class="num-sub">+</span></div>
+                <div class="num-btn" data-phonekey="KEY_NUM0">0<span class="num-sub">_</span></div>
+                <div class="num-btn" data-phonekey="KEY_POUND">#<span class="num-sub">⤝</span></div>
+            </div>
+        </div>
+    </main>
+
+    <footer>POWERED BY WEBJVM</footer>
+
+    <script>
+        let jvmInstance = null;
+        const canvas = document.getElementById('display-canvas');
+        const overlay = document.getElementById('status-overlay');
+
+        // Gerçek .jar dosyasını yükleyen fonksiyon
+        document.getElementById('jar-file').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            overlay.innerText = "Java Bytecode çözülüyor, oyun başlatılıyor...";
+            
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                
+                // Eğer eski bir oyun oturumu varsa temizle
+                if (jvmInstance) {
+                    jvmInstance.terminate();
+                }
+
+                // Gerçek JVM emülasyon motorunu canvas üzerine bağla
+                jvmInstance = await WebJVM.launch({
+                    canvas: canvas,
+                    jar: new Uint8Array(arrayBuffer),
+                    onStatus: (msg) => {
+                        if(msg.includes("running")) {
+                            overlay.style.display = "none";
+                        }
+                    },
+                    onError: (err) => {
+                        overlay.style.display = "block";
+                        overlay.innerText = "Hata: Oyun yapısı bu sürümle uyuşmadı.";
+                        console.error(err);
+                    }
+                });
+
+            } catch (error) {
+                overlay.style.display = "block";
+                overlay.innerText = "Yükleme Hatası!";
+                console.error(error);
+            }
+        });
+
+        // Gerçek tuş basışlarını emülatör motoruna gönderme işlemi
+        const buttons = document.querySelectorAll('.pad-btn, .num-btn');
+        buttons.forEach(btn => {
+            const key = btn.getAttribute('data-phonekey');
+            
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (jvmInstance && jvmInstance.sendKeyEvent) {
+                    jvmInstance.sendKeyEvent(key, 'PRESS');
+                }
+            });
+
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                if (jvmInstance && jvmInstance.sendKeyEvent) {
+                    jvmInstance.sendKeyEvent(key, 'RELEASE');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
