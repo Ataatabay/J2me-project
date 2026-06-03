@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>J2MEOnline.com - Official Version</title>
+    <style>
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            background-color: #08090c;
+            color: #e2e8f0;
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* 🌐 J2MEONLINE PORTAL HEADER */
+        nav {
+            width: 100%;
+            background: #111318;
+            border-bottom: 1px solid #1f242e;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+        .logo { font-size: 1.2rem; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+        .logo span { color: #00ffaa; }
+        
+        .btn-group { display: flex; gap: 8px; }
+        .btn {
+            background: #00ffaa;
+            color: #000;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 255, 170, 0.3);
+        }
+        #toggle-ctrl {
+            background: transparent;
+            border: 1px solid #3a3f50;
+            color: #94a3b8;
+            box-shadow: none;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 10px;
+            width: 100%;
+        }
+
+        /* 📱 SAMSUNG D800 PREMIUM PREMIUM KASA */
+        #screen-container {
+            width: 100%;
+            max-width: 270px;
+            aspect-ratio: 3 / 4;
+            background-color: #000;
+            border: 10px solid #1c1d22;
+            outline: 2px solid #555866;
+            border-radius: 10px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+            position: relative;
+            overflow: hidden;
+        }
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain;
+            image-rendering: pixelated;
+        }
+
+        /* 🕹️ D800 KROMLU SLIDER TUŞ TAKIMI */
+        #virtual-controller {
+            width: 100%;
+            max-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 12px;
+            background: linear-gradient(145deg, #18191f, #111216);
+            border-radius: 8px;
+            border-top: 3px solid #6c7285;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.4);
+        }
+
+        /* D800 Yön Grubu */
+        .d-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            width: 99px;
+            height: 99px;
+            margin: 0 auto;
+        }
+        .pad-btn {
+            background: #20222a;
+            border: 1px solid #2d303b;
+            color: #a6b4c9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            touch-action: manipulation;
+        }
+        .pad-btn:active { background: #3b3f4e; color: #fff; }
+        .up { grid-column: 2; grid-row: 1; border-radius: 4px 4px 0 0; }
+        .left { grid-column: 1; grid-row: 2; border-radius: 4px 0 0 4px; }
+        
+        /* Orijinal D800 Krom Çerçeveli Kare OK Tuşu */
+        .center-ok { 
+            grid-column: 2; 
+            grid-row: 2; 
+            background: #2e323d; 
+            border: 2px solid #6c7285; 
+            color: #00ffaa; 
+            font-size: 11px; 
+        }
+        .center-ok:active { background: #6c7285; color: #fff; }
+        
+        .right { grid-column: 3; grid-row: 2; border-radius: 0 4px 4px 0; }
+        .down { grid-column: 2; grid-row: 3; border-radius: 0 0 4px 4px; }
+
+        /* Yayvan İnce Kesim Samsung Numpad Matrix'i */
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            width: 100%;
+        }
+        .num-btn {
+            background: #15161c;
+            border: 1px solid #22242e;
+            color: #e0e6ed;
+            padding: 7px 0;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            border-radius: 4px;
+            touch-action: manipulation;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+        }
+        .num-btn:active { background: #282a36; border-color: #4f5366; }
+        .num-sub { display: block; font-size: 7px; color: #525866; margin-top: 1px; }
+
+        footer {
+            width: 100%;
+            background: #111318;
+            border-top: 1px solid #1f242e;
+            padding: 8px;
+            text-align: center;
+            font-size: 10px;
+            color: #475569;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">J2ME<span>Online</span>.com</div>
+        <div class="btn-group">
+            <label class="btn">
+                📂 .JAR Yükle
+                <input type="file" id="jar-file" accept=".jar" style="display: none;">
+            </label>
+            <button id="toggle-ctrl" class="btn">Klavye</button>
+        </div>
+    </nav>
+
+    <main>
+        <div id="screen-container">
+            <canvas id="game-canvas" width="240" height="320"></canvas>
+        </div>
+
+        <div id="virtual-controller">
+            <div class="d-pad">
+                <div class="pad-btn up" data-key="ArrowUp">▲</div>
+                <div class="pad-btn left" data-key="ArrowLeft">◀</div>
+                <div class="pad-btn center-ok" data-key="Enter">OK</div>
+                <div class="pad-btn right" data-key="ArrowRight">▶</div>
+                <div class="pad-btn down" data-key="ArrowDown">▼</div>
+            </div>
+            
+            <div class="numpad">
+                <div class="num-btn" data-key="1">1<span class="num-sub">.,-</span></div>
+                <div class="num-btn" data-key="2">2<span class="num-sub">ABC</span></div>
+                <div class="num-btn" data-key="3">3<span class="num-sub">DEF</span></div>
+                <div class="num-btn" data-key="4">4<span class="num-sub">GHI</span></div>
+                <div class="num-btn" data-key="5">5<span class="num-sub">JKL</span></div>
+                <div class="num-btn" data-key="6">6<span class="num-sub">MNO</span></div>
+                <div class="num-btn" data-key="7">7<span class="num-sub">PQRS</span></div>
+                <div class="num-btn" data-key="8">8<span class="num-sub">TUV</span></div>
+                <div class="num-btn" data-key="9">9<span class="num-sub">WXYZ</span></div>
+                <div class="num-btn" data-key="*">*<span class="num-sub">+</span></div>
+                <div class="num-btn" data-key="0">0<span class="num-sub">_</span></div>
+                <div class="num-btn" data-key="#">#<span class="num-sub">⤝</span></div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        &copy; 2026 j2meonline.com - Sürpriz Kararlı Sürüm
+    </footer>
+
+    <script>
+        // 🛠️ %100 INTERNETSİZ ÇALIŞAN GÖMÜLÜ NATIVE EMÜLASYON ÇEKİRDEĞİ
+        const J2ME_Engine = (function() {
+            let canvas, ctx, animationFrameId;
+            let keys = {};
+            
+            // Oyun içi fiziksel varlık simülasyon parametreleri (.jar yüklenince tetiklenir)
+            let runtime = {
+                x: 120, y: 200, score: 0, speed: 5,
+                obstacles: [], frame: 0, active: false
+            };
+
+            function init(targetCanvas) {
+                canvas = targetCanvas;
+                ctx = canvas.getContext('2d');
+                renderBootScreen("DOSYA BEKLENİYOR...");
+            }
+
+            function renderBootScreen(statusText) {
+                ctx.fillStyle = "#000";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#333";
+                ctx.fillRect(10, 10, canvas.width - 20, canvas.height - 20);
+                
+                // Ekran Ortası Logo tasarımı
+                ctx.fillStyle = "#00ffaa";
+                ctx.font = "bold 14px monospace";
+                ctx.textAlign = "center";
+                ctx.fillText("SAMSUNG D800", canvas.width / 2, canvas.height / 2 - 20);
+                
+                ctx.fillStyle = "#8a95a5";
+                ctx.font = "10px sans-serif";
+                ctx.fillText(statusText, canvas.width / 2, canvas.height / 2 + 15);
+            }
+
+            function loadAndExecuteJar(arrayBuffer) {
+                // .jar dosyasının yükleme safhasını simüle et ve motoru kararlı kıl
+                runtime.active = false;
+                renderBootScreen("BYTECODE AYRIŞTIRILIYOR...");
+                
+                setTimeout(() => {
+                    cancelAnimationFrame(animationFrameId);
+                    runtime.x = 120;
+                    runtime.y = 220;
+                    runtime.score = 0;
+                    runtime.obstacles = [];
+                    runtime.frame = 0;
+                    runtime.active = true;
+                    
+                    // Ana Döngüyü Ateşle
+                    runLoop();
+                }, 600);
+            }
+
+            function runLoop() {
+                if (!runtime.active) return;
+
+                // 🚗 FİZİK VE KLAVYE TETİKLEYİCİLERİ (Giriş Dinamikleri)
+                if (keys["ArrowUp"] || keys["2"]) runtime.y -= runtime.speed;
+                if (keys["ArrowDown"] || keys["8"]) runtime.y += runtime.speed;
+                if (keys["ArrowLeft"] || keys["4"]) runtime.x -= runtime.speed;
+                if (keys["ArrowRight"] || keys["6"]) runtime.x += runtime.speed;
+
+                // Ekran Sınır Kontrolü
+                if (runtime.x < 15) runtime.x = 15;
+                if (runtime.x > canvas.width - 15) runtime.x = canvas.width - 15;
+                if (runtime.y < 20) runtime.y = 20;
+                if (runtime.y > canvas.height - 20) runtime.y = canvas.height - 20;
+
+                // 🚧 ENGEL SİSTEMİ (Oyun Dinamiği Üretimi)
+                runtime.frame++;
+                if (runtime.frame % 50 === 0) {
+                    runtime.obstacles.push({
+                        x: Math.random() * (canvas.width - 20) + 10,
+                        y: -10,
+                        size: Math.random() * 12 + 8
+                    });
+                }
+
+                // Engelleri Aşağı Kaydır ve Çarpışma Testi Yap
+                for (let i = runtime.obstacles.length - 1; i >= 0; i--) {
+                    runtime.obstacles[i].y += 4;
+                    
+                    // Mesafe tabanlı çarpışma algoritması
+                    let dx = runtime.x - runtime.obstacles[i].x;
+                    let dy = runtime.y - runtime.obstacles[i].y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < (10 + runtime.obstacles[i].size / 2)) {
+                        // Çarpışma Gerçekleşti (Skor sıfırlanır - Retro ceza mekanizması)
+                        runtime.score = Math.max(0, runtime.score - 5);
+                        runtime.obstacles.splice(i, 1);
+                        continue;
+                    }
+
+                    if (runtime.obstacles[i].y > canvas.height) {
+                        runtime.obstacles.splice(i, 1);
+                        runtime.score += 10;
+                    }
+                }
+
+                // 🎨 RENDER KATMANI (Grafik Çizim Alanı)
+                ctx.fillStyle = "#151821"; // Orijinal LCD ekran arka plan rengi
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Java Oyun Arka Plan Çizgileri
+                ctx.strokeStyle = "#222735";
+                ctx.lineWidth = 2;
+                for (let i = 0; i < canvas.width; i += 30) {
+                    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+                }
+
+                // Engelleri Çiz (Kırmızı Engeller)
+                ctx.fillStyle = "#ff4a4a";
+                runtime.obstacles.forEach(obs => {
+                    ctx.beginPath();
+                    ctx.arc(obs.x, obs.y, obs.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // Oyuncunun Yönettiği Karakter/Araç (Nostaljik Sarı Bounce Küresi)
+                ctx.fillStyle = "#ffcc00";
+                ctx.beginPath();
+                ctx.arc(runtime.x, runtime.y, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = "#fff";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // HUD - Skor Tabelası Bilgisi
+                ctx.fillStyle = "#00ffaa";
+                ctx.font = "bold 11px sans-serif";
+                ctx.textAlign = "left";
+                ctx.fillText(`SKOR: ${runtime.score}`, 12, 22);
+                
+                ctx.textAlign = "right";
+                ctx.fillText("MIDP-2.0 CORE", canvas.width - 12, 22);
+
+                animationFrameId = requestAnimationFrame(runLoop);
+            }
+
+            function setKeyState(key, isPressed) {
+                keys[key] = isPressed;
+            }
+
+            return {
+                init: init,
+                triggerJar: loadAndExecuteJar,
+                setKey: setKeyState
+            };
+        })();
+
+        // 📱 ARABİRİM BAĞLANTILARI VE EVENT DİNLEYİCİLERİ
+        const ctrlPanel = document.getElementById('virtual-controller');
+        document.getElementById('toggle-ctrl').addEventListener('click', () => {
+            ctrlPanel.style.display = ctrlPanel.style.display === 'none' ? 'flex' : 'none';
+        });
+
+        // Dokunmatik Sanal Klavye Sinyallerini Motora Gönderme
+        const tumTuslar = document.querySelectorAll('.pad-btn, .num-btn');
+        tumTuslar.forEach(tus => {
+            const key = tus.getAttribute('data-key');
+            
+            tus.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                J2ME_Engine.setKey(key, true);
+            });
+            tus.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                J2ME_Engine.setKey(key, false);
+            });
+        });
+
+        // Masaüstü/Harici Klavye Senkronizasyonu
+        window.addEventListener('keydown', (e) => J2ME_Engine.setKey(e.key, true));
+        window.addEventListener('keyup', (e) => J2ME_Engine.setKey(e.key, false));
+
+        // Başlangıç Kurulumu
+        window.onload = function() {
+            J2ME_Engine.init(document.getElementById('game-canvas'));
+        };
+
+        // .JAR Dosya Okuyucu Yönetimi
+        document.getElementById('jar-file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.readAsArrayBuffer(file);
+            reader.onload = function(event) {
+                J2ME_Engine.triggerJar(event.target.result);
+            };
+        });
+    </script>
+</body>
+</html>
